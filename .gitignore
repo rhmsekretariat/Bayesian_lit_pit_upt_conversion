@@ -1,4 +1,45 @@
-.Rproj.user
+# History files
 .Rhistory
+.Rapp.history
+
+# RStudio files
+.Rproj.user/
+
+# Session Data files
 .RData
-.Ruserdata
+
+# Output files
+*.utf8.md
+*.knit.md
+
+# Logs and cache
+.Rout
+.Rout.save
+*.log
+*.aux
+*.toc
+*.out
+*.nav
+*.snm
+
+# Compiled code
+*.o
+*.so
+*.dll
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Quarto and markdown cache
+_cache/
+*.html
+*.pdf
+
+# Personal files (optional)
+.DS_Store
+Thumbs.db
+
+# Ignore Excel temporary files
+~$*.xlsx
