@@ -7,7 +7,7 @@ This repository contains R scripts and pre-trained Bayesian models to convert be
 - Models/: Pre-trained `.rds` models for LIT and PIT
 
 ## How to Use for Data Conversion
-1. Prepare your LIT/PIT data in wide format (like the example)
+1. Prepare your LIT/PIT data in wide format
 2. Load the model using `readRDS()`
 3. Use the provided script (Application.R) to run predictions
 
