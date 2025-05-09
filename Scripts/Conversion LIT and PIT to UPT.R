@@ -50,9 +50,10 @@ fit_delta <- brm(
   data = comparison5, 
   family = "dirichlet",
   cores = 4,
-  control = list(adapt_delta = 0.95) # Increase adapt_delta to 0.95
+  control = list(adapt_delta = 0.95) 
 )
 summary (fit_delta)
+
 
 #3.2.Trial delta (without method)----
 fit_delta.nomethod <- brm(
@@ -61,7 +62,7 @@ fit_delta.nomethod <- brm(
   data = comparison5, 
   family = "dirichlet",
   cores = 4,
-  control = list(adapt_delta = 0.95) # Increase adapt_delta to 0.95
+  control = list(adapt_delta = 0.95) 
 )
 summary (fit_delta.nomethod)
 
@@ -92,13 +93,14 @@ fitUPT_LIT <- brm(
 summary (fitUPT_LIT)
 
 # Save the LIT-to-UPT model
-saveRDS(fitUPT_LIT, file = "D:/2002/UQ/R Project/COREMAP/fitUPT_LIT.rds")
+saveRDS(fitUPT_LIT, file = "fitUPT_LIT.rds")
 
-# ==== Step 1: Select LIT columns from your data ====
+
+# Step 1: Select LIT columns 
 lit_data <- wide_comparison_3 %>%
   select(HC_LIT, DC_LIT, DCA_LIT, SP_LIT, SC_LIT, MA_LIT, OT_LIT, R_LIT, S_LIT, SI_LIT, RK_LIT)
 
-# ==== Step 2: Build functions from model ====
+# Step 2: Build functions from model 
 categoryFunction <- function(fit, lower, upper) {
   coefs <- fixef(fit)[lower:upper]
   nms <- rownames(summary(fit)$fixed)[lower:upper]
@@ -112,7 +114,7 @@ categoryFunction <- function(fit, lower, upper) {
 lowers_LIT <- seq(1, 110, by = 11)
 functions_LIT <- sapply(lowers_LIT, function(x) categoryFunction(fitUPT_LIT, x, x + 10))
 
-# ==== Step 3: Apply the functions to each row ====
+# Step 3: Apply the functions to each row 
 apply_functions_LIT <- function(row, functions) {
   names(row) <- gsub("_LIT", "", names(row))
   preds <- sapply(functions, function(f) do.call(f, as.list(row)))
@@ -123,14 +125,14 @@ apply_functions_LIT <- function(row, functions) {
 predicted_upt_lit <- t(apply(lit_data, 1, function(row) apply_functions_LIT(row, functions_LIT)))
 predicted_upt_lit_df <- as.data.frame(predicted_upt_lit)
 
-# ==== Step 4: Add Site column and rename ====
+# Step 4: Add Site column and rename 
 predicted_upt_lit_df <- cbind(Site = wide_comparison_3$Site, predicted_upt_lit_df)
 colnames(predicted_upt_lit_df)[-1] <- c("HC_UPT_pred", "DC_UPT_pred", "DCA_UPT_pred",
                                         "SP_UPT_pred", "SC_UPT_pred", "MA_UPT_pred",
                                         "OT_UPT_pred", "R_UPT_pred", "S_UPT_pred",
                                         "SI_UPT_pred", "RK_UPT_pred")
 
-# ==== Step 5: Combine with actual UPT + LIT ====
+# Step 5: Combine with actual UPT + LIT 
 actual_upt_lit <- wide_comparison_3 %>%
   select(Site, matches("UPT|LIT")) %>%
   rename_with(~ paste0(., "_actual"), -Site)
@@ -138,26 +140,26 @@ actual_upt_lit <- wide_comparison_3 %>%
 comparison_df_lit <- actual_upt_lit %>%
   left_join(predicted_upt_lit_df, by = "Site")
 
-# ==== Step 6: Multiply proportions by 100 ====
+# Step 6: Multiply proportions by 100 
 comparison_df_lit <- comparison_df_lit %>%
   mutate(across(ends_with('_actual') | ends_with('_pred'), ~ . * 100))
 
-# ==== Step 7: Rename prediction columns ====
+# Step 7: Rename prediction columns 
 colnames(comparison_df_lit) <- sub("UPT_pred", "pred", colnames(comparison_df_lit))
 
-# ==== Step 8: Reshape to long format ====
+# Step 8: Reshape to long format 
 comparison_long_lit <- comparison_df_lit %>%
   pivot_longer(cols = -Site,
                names_to = c("Category", "Method"),
                names_sep = "_",
                values_to = "Value")
 
-# ==== Step 9: Kruskal-Wallis test ====
+# Step 9: Kruskal-Wallis test 
 kruskal_test_results_lit <- comparison_long_lit %>%
   group_by(Category) %>%
   summarise(p_value = kruskal.test(Value ~ Method)$p.value)
 
-# ==== Step 10: Dunn post-hoc test ====
+# Step 10: Dunn post-hoc test
 posthoc_results_lit <- comparison_long_lit %>%
   group_by(Category) %>%
   do({
@@ -167,7 +169,7 @@ posthoc_results_lit <- comparison_long_lit %>%
                P_adjusted = dunn_test$P.adjusted)
   })
 
-# ==== Step 11: Generate R² plots ====
+# Step 11: Generate R2 plots 
 categories <- c("HC", "DC", "DCA", "SC", "SP", "MA", "OT", "R", "S", "SI", "RK")
 
 plot_with_r2 <- function(data, category) {
@@ -209,14 +211,14 @@ fitUPT_PIT <- brm(
 
 summary (fitUPT_PIT)
 
-# Save the LIT-to-UPT model
-saveRDS(fitUPT_PIT, file = "D:/2002/UQ/R Project/COREMAP/fitUPT_PIT.rds")
+# Save the PIT-to-UPT model
+saveRDS(fitUPT_PIT, file = "fitUPT_PIT.rds")
 
-# ==== Step 1: Select PIT columns from your data ====
+# Step 1: Select PIT columns 
 pit_data <- wide_comparison_3 %>%
   select(HC_PIT, DC_PIT, DCA_PIT, SP_PIT, SC_PIT, MA_PIT, OT_PIT, R_PIT, S_PIT, SI_PIT, RK_PIT)
 
-# ==== Step 2: Build functions from model ====
+# Step 2: Build functions from model
 categoryFunction_PIT <- function(fit, lower, upper) {
   coefs <- fixef(fit)[lower:upper]
   nms <- rownames(summary(fit)$fixed)[lower:upper]
@@ -230,7 +232,7 @@ categoryFunction_PIT <- function(fit, lower, upper) {
 lowers_PIT <- seq(1, 110, by = 11)
 functions_PIT <- sapply(lowers_PIT, function(x) categoryFunction_PIT(fitUPT_PIT, x, x + 10))
 
-# ==== Step 3: Apply the functions to each row ====
+# Step 3: Apply the functions to each row 
 apply_functions_PIT <- function(row, functions) {
   names(row) <- gsub("_PIT", "", names(row))
   preds <- sapply(functions, function(f) do.call(f, as.list(row)))
@@ -241,14 +243,14 @@ apply_functions_PIT <- function(row, functions) {
 predicted_upt_pit <- t(apply(pit_data, 1, function(row) apply_functions_PIT(row, functions_PIT)))
 predicted_upt_pit_df <- as.data.frame(predicted_upt_pit)
 
-# ==== Step 4: Add Site column and rename ====
+# Step 4: Add Site column and rename 
 predicted_upt_pit_df <- cbind(Site = wide_comparison_3$Site, predicted_upt_pit_df)
 colnames(predicted_upt_pit_df)[-1] <- c("HC_UPT_pred", "DC_UPT_pred", "DCA_UPT_pred",
                                         "SP_UPT_pred", "SC_UPT_pred", "MA_UPT_pred",
                                         "OT_UPT_pred", "R_UPT_pred", "S_UPT_pred",
                                         "SI_UPT_pred", "RK_UPT_pred")
 
-# ==== Step 5: Combine with actual UPT + PIT ====
+# Step 5: Combine with actual UPT + PIT 
 actual_upt_pit <- wide_comparison_3 %>%
   select(Site, matches("UPT|PIT")) %>%
   rename_with(~ paste0(., "_actual"), -Site)
@@ -256,26 +258,26 @@ actual_upt_pit <- wide_comparison_3 %>%
 comparison_df_pit <- actual_upt_pit %>%
   left_join(predicted_upt_pit_df, by = "Site")
 
-# ==== Step 6: Multiply proportions by 100 ====
+# Step 6: Multiply proportions by 100 
 comparison_df_pit <- comparison_df_pit %>%
   mutate(across(ends_with('_actual') | ends_with('_pred'), ~ . * 100))
 
-# ==== Step 7: Rename prediction columns ====
+# Step 7: Rename prediction columns
 colnames(comparison_df_pit) <- sub("UPT_pred", "pred", colnames(comparison_df_pit))
 
-# ==== Step 8: Reshape to long format ====
+# Step 8: Reshape to long format 
 comparison_long_pit <- comparison_df_pit %>%
   pivot_longer(cols = -Site,
                names_to = c("Category", "Method"),
                names_sep = "_",
                values_to = "Value")
 
-# ==== Step 9: Kruskal-Wallis test ====
+# Step 9: Kruskal-Wallis test
 kruskal_test_results_pit <- comparison_long_pit %>%
   group_by(Category) %>%
   summarise(p_value = kruskal.test(Value ~ Method)$p.value)
 
-# ==== Step 10: Dunn post-hoc test ====
+# Step 10: Dunn post-hoc test 
 posthoc_results_pit <- comparison_long_pit %>%
   group_by(Category) %>%
   do({
@@ -285,8 +287,11 @@ posthoc_results_pit <- comparison_long_pit %>%
                P_adjusted = dunn_test$P.adjusted)
   })
 
-# ==== Step 11: Generate R² plots ====
+# Step 11: Generate R2 plots 
 plots_pit <- lapply(categories, function(category) plot_with_r2(comparison_df_pit, category))
 do.call(grid.arrange, c(plots_pit, ncol = 3))
+
+
+
 
 
