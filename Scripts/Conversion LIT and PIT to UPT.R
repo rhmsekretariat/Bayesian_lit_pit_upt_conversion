@@ -12,6 +12,8 @@ library (broom)
 library (compositions)
 library (loo)
 library(dunn.test)
+library (extrafont)
+library (gridExtra)
 
 #2. Prepare data set----
 
@@ -43,7 +45,7 @@ head (wide_comparison_3)
 str(wide_comparison_3)
 
 #3. Test assumption if the methods have a significant effect on the benthic categories as a composition----
-#3.1.Trial delta (with method)----
+#3.1.Fit delta (with method)----
 fit_delta <- brm(
   formula = cbind(HC, DC, DCA, SC, SP, MA, OT, R, S, SI, RK) ~ Method - 1 + 
     (1 | Location/Site), 
@@ -54,8 +56,58 @@ fit_delta <- brm(
 )
 summary (fit_delta)
 
+#3.1.a Visualization of Trial delta (with method)----
+extrafont::loadfonts(device = "win")
 
-#3.2.Trial delta (without method)----
+# Define the data frame (extract the values from the model fit_delta)
+df <- data.frame(
+  Method = rep(c("LIT", "PIT", "UPT"), times = 10),
+  Category = rep(c("DC", "DCA", "SC", "SP", "MA", "OT", "R", "S", "SI", "RK"), each = 3),
+  Estimate = c(-4.81, -4.64, -3.75, -0.07, 0.23, 0.52, -3.75, -3.37, -2.87,
+               -3.65, -3.45, -2.86, -4.26, -3.85, -3.58, -3.25, -3.75, -2.48,
+               -2.84, -2.59, -1.84, -2.69, -2.17, -1.66, -4.87, -4.71, -4.30,
+               -4.88, -4.70, -4.40),
+  SE = c(0.36, 0.36, 0.36, 0.27, 0.27, 0.27, 0.66, 0.66, 0.66,
+         0.58, 0.58, 0.59, 0.51, 0.52, 0.52, 0.54, 0.54, 0.54,
+         1.11, 1.11, 1.11, 0.49, 0.49, 0.49, 0.20, 0.20, 0.20,
+         0.22, 0.22, 0.22)
+)
+
+# Transformation
+df$Percentage <- plogis(df$Estimate) * 100
+df$Percentage_Error <- (plogis(df$Estimate + df$SE) - plogis(df$Estimate)) * 100
+df$Lower <- pmax(df$Percentage - df$Percentage_Error, 0)
+df$Upper <- df$Percentage + df$Percentage_Error
+df$Category <- factor(df$Category, levels = c("DC", "DCA", "SC", "SP", "MA", "OT", "R", "S", "SI", "RK"))
+
+# Define shape palette for B/W
+shape_palette <- c("LIT" = 16, "PIT" = 17, "UPT" = 15)  # circle, triangle, square
+
+# Final plot
+ggplot(df, aes(x = Category, y = Percentage, shape = Method)) +
+  geom_point(position = position_dodge(0.6), size = 3.0, color = "black") +
+  geom_errorbar(aes(ymin = Lower, ymax = Upper),
+                position = position_dodge(0.6),
+                width = 0.4,
+                color = "black",
+                linewidth = 0.5) +
+  scale_shape_manual(values = shape_palette) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10), limits = c(0, 70)) +
+  labs(x = "Category", y = "The mean percentage (%)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    text = element_text(family = "Arial"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    axis.line = element_line(size = 0.7, color = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "right",
+  )
+
+#3.2.Fit delta (without method)----
 fit_delta.nomethod <- brm(
   formula = cbind(HC, DC, DCA, SC, SP, MA, OT, R, S, SI, RK) ~  1 + 
     (1 | Location/Site), 
@@ -184,8 +236,8 @@ plot_with_r2 <- function(data, category) {
     geom_smooth(method = "lm", se = TRUE, color = "blue") +
     labs(
       title = paste(category, "(R² =", round(r2, 2), ")"),
-      x = "Actual",
-      y = "Predicted"
+      x = "Actual (%)",
+      y = "Predicted (%)"
     ) +
     theme_minimal() +
     theme(
